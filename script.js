@@ -5,7 +5,7 @@ async function downloadPDF() {
     try {
         const iframeDocument = iframe.contentWindow.document.body;
 
-        // Ensure html2canvas is loaded
+        // Load html2canvas dynamically
         const script = document.createElement("script");
         script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
         document.body.appendChild(script);
@@ -14,36 +14,44 @@ async function downloadPDF() {
             const pdf = new jsPDF("p", "mm", "a4");
             const pageWidth = 210; // A4 width in mm
             const pageHeight = 297; // A4 height in mm
-            let yPosition = 10; // Start position for text in mm
+            const margin = 10; // Margin for text and images
+            let yPosition = margin; // Start position in mm
 
-            // Capture the full page content
-            const canvas = await html2canvas(iframeDocument, {
+            // Select the content inside the iframe
+            const content = iframeDocument.cloneNode(true);
+
+            // Hide unnecessary elements (like navigation bars)
+            const elementsToHide = content.querySelectorAll("nav, footer, .some-class");
+            elementsToHide.forEach(el => el.style.display = "none");
+
+            // Capture content as an image
+            const canvas = await html2canvas(content, {
                 scale: 2,
                 useCORS: true,
                 logging: false
             });
 
             const imgData = canvas.toDataURL("image/png");
-            let imgWidth = pageWidth - 20; // Leave margins
+            let imgWidth = pageWidth - 2 * margin; // Leave margins
             let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-            if (imgHeight > pageHeight - 20) {
-                let totalPages = Math.ceil(imgHeight / (pageHeight - 20));
+            // If content is larger than a single page, split into multiple pages
+            if (imgHeight > pageHeight - 2 * margin) {
+                let totalPages = Math.ceil(imgHeight / (pageHeight - 2 * margin));
                 let heightLeft = imgHeight;
-                let position = 10;
+                let position = yPosition;
 
-                // Loop to add multiple pages
                 for (let i = 0; i < totalPages; i++) {
-                    pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight - 20;
-                    position = heightLeft > 0 ? -pageHeight + 30 : position;
+                    pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - 2 * margin);
+                    position = heightLeft > 0 ? -pageHeight + 2 * margin : position;
 
                     if (heightLeft > 0) {
                         pdf.addPage();
                     }
                 }
             } else {
-                pdf.addImage(imgData, "PNG", 10, yPosition, imgWidth, imgHeight);
+                pdf.addImage(imgData, "PNG", margin, yPosition, imgWidth, imgHeight);
             }
 
             pdf.save("report.pdf");
