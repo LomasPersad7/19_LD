@@ -1,1 +1,1 @@
-# 19_LD
+# Project updates for 'Outcomes in lattice degeneration'
