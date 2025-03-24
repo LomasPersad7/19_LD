@@ -1,34 +1,23 @@
 async function downloadPDF() {
-    const { jsPDF } = window.jspdf;
     const iframe = document.querySelector("iframe");
 
     try {
         const iframeDocument = iframe.contentWindow.document.body;
 
-        // Capture the full content inside the iframe using html2canvas
-        const canvas = await html2canvas(iframeDocument, { scale: 2 });
-        const imgData = canvas.toDataURL("image/png");
+        // Load html2pdf.js
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+        document.body.appendChild(script);
 
-        let pdf = new jsPDF("p", "mm", "a4");
-        let imgWidth = 210; // A4 width in mm
-        let pageHeight = 297; // A4 height in mm
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        // Add first page
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // Add extra pages if needed
-        while (heightLeft > 0) {
-            position -= pageHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
-
-        pdf.save("report.pdf");
+        script.onload = () => {
+            html2pdf(iframeDocument, {
+                margin: 10,
+                filename: "report.pdf",
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+            });
+        };
 
     } catch (error) {
         console.error("Error generating PDF:", error);
