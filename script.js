@@ -90,3 +90,24 @@ async function downloadPDF() {
     }
 }
 
+
+function downloadHTML() {
+    const iframe = document.querySelector("iframe");
+
+    try {
+        const iframeDocument = iframe.contentWindow.document.documentElement.outerHTML; // Get full HTML content
+        const blob = new Blob([iframeDocument], { type: "text/html" });
+        const link = document.createElement("a");
+
+        link.href = URL.createObjectURL(blob);
+        link.download = "report.html"; // File name
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error("Error downloading HTML:", error);
+        alert("Download failed. Try a different browser.");
+    }
+}
+
+
